@@ -37,6 +37,7 @@ MODEL_MAPPING_NAMES = OrderedDict(
         ("albert", "AlbertModel"),
         ("align", "AlignModel"),
         ("altclip", "AltCLIPModel"),
+        ("arc_hunyuan_video", "ARCHunyuanVideoForConditionalGeneration"),
         ("arcee", "ArceeModel"),
         ("aria", "AriaModel"),
         ("aria_text", "AriaTextModel"),

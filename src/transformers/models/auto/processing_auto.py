@@ -48,6 +48,7 @@ PROCESSOR_MAPPING_NAMES = OrderedDict(
         ("aimv2", "CLIPProcessor"),
         ("align", "AlignProcessor"),
         ("altclip", "AltCLIPProcessor"),
+        ("arc_hunyuan_video", "ARCHunyuanVideoProcessor"),
         ("aria", "AriaProcessor"),
         ("aya_vision", "AyaVisionProcessor"),
         ("bark", "BarkProcessor"),

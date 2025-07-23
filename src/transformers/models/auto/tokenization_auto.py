@@ -74,6 +74,12 @@ TOKENIZER_MAPPING_NAMES = OrderedDict[str, tuple[Optional[str], Optional[str]]](
         ),
         ("align", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
         ("arcee", ("LlamaTokenizer", "LlamaTokenizerFast" if is_tokenizers_available() else None)),
+        (
+            "arc_hunyuan_video",
+            (
+                "ARCHunyuanVideoTokenizer",
+            ),
+        ),
         ("aria", ("LlamaTokenizer", "LlamaTokenizerFast" if is_tokenizers_available() else None)),
         ("aya_vision", (None, "CohereTokenizerFast" if is_tokenizers_available() else None)),
         ("bark", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
