@@ -24,8 +24,7 @@ from ...video_utils import VideoInput
 
 logger = logging.get_logger(__name__)
 
-# TODO: This is different from our font
-DEFAULT_FONT_PATH = "ybelkada/fonts"
+DEFAULT_FONT_PATH = "liyz/fonts"
 
 
 class ARCHunyuanVideoVideoKwargs(VideosKwargs, total=False):
@@ -86,7 +85,7 @@ class ARCHunyuanVideoProcessor(ProcessorMixin):
 
     def load_font(self, font_path):
         if font_path is None:
-            font = hf_hub_download(DEFAULT_FONT_PATH, "Arial.TTF")
+            font = hf_hub_download(DEFAULT_FONT_PATH, "ARIAL.TTF")
         else:
             font = font_path
 
