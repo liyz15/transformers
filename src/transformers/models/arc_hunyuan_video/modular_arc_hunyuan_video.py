@@ -675,7 +675,7 @@ class ARCHunyuanVideoAudioEncoder(ARCHunyuanVideoPreTrainedModel):
 ################################################################################
 
 
-class NaVitTransformer(nn.Module):
+class ARCHunyuanVideoNaVitTransformer(nn.Module):
     def __init__(self, config: ARCHunyuanVideoVisionConfig):
         super().__init__()
         self.config = config
@@ -685,7 +685,7 @@ class NaVitTransformer(nn.Module):
         self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
 
         self.layers = nn.ModuleList(
-            [HunYuanDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
+            [ARCHunyuanVideoDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
 
     def forward(
@@ -730,7 +730,7 @@ class NaVitTransformer(nn.Module):
         return hidden_states, img_pos
 
 
-class AnyResCLIPVisionEmbeddings(nn.Module):
+class ARCHunyuanVideoAnyResCLIPVisionEmbeddings(nn.Module):
     def __init__(self, config: ARCHunyuanVideoVisionConfig):
         super().__init__()
 
@@ -824,13 +824,13 @@ class AnyResCLIPVisionEmbeddings(nn.Module):
         return embeddings, attn_mask, pos_groups
 
 
-class AnyResVitTransformer(NaVitTransformer):
+class ARCHunyuanVideoAnyResVitTransformer(ARCHunyuanVideoNaVitTransformer):
     def __init__(self, config: ARCHunyuanVideoVisionConfig):
         super().__init__(config)
-        self.embeddings = AnyResCLIPVisionEmbeddings(config)
+        self.embeddings = ARCHunyuanVideoAnyResCLIPVisionEmbeddings(config)
 
 
-class SimpleConvMlp(nn.Module):
+class ARCHunyuanVideoSimpleConvMlp(nn.Module):
     def __init__(self, in_channels, out_channels, anyres_pooling_size, rms_norm_eps, cat_extra_token=True):
         super().__init__()
 
@@ -851,8 +851,8 @@ class SimpleConvMlp(nn.Module):
         self.cat_extra_token = cat_extra_token
         self.use_rms_norm = True
         if self.use_rms_norm:
-            self.before_rms = HunYuanRMSNorm(in_channels, eps=rms_norm_eps)
-            self.after_rms = HunYuanRMSNorm(out_channels, eps=rms_norm_eps)
+            self.before_rms = ARCHunyuanVideoRMSNorm(in_channels, eps=rms_norm_eps)
+            self.after_rms = ARCHunyuanVideoRMSNorm(out_channels, eps=rms_norm_eps)
 
     def forward(self, x, size=(16, 16), x2=None, size2=(16, 16), is_video=False):
         return self.single_forward(x=x, size=size, x2=x2, size2=size2, is_video=is_video)
@@ -925,14 +925,14 @@ class SimpleConvMlp(nn.Module):
             return x
 
 
-class HunyuanVit_Video(torch.nn.Module):
+class ARCHunyuanVideoVisionModel(torch.nn.Module):
     def __init__(self, vision_config: ARCHunyuanVideoVisionConfig, text_config: ARCHunyuanVideoTextConfig):
         super().__init__()
         self.vision_config = vision_config
         self.text_config = text_config
-        self.vit = AnyResVitTransformer(vision_config)
+        self.vit = ARCHunyuanVideoAnyResVitTransformer(vision_config)
 
-        self.perceive = SimpleConvMlp(
+        self.perceive = ARCHunyuanVideoSimpleConvMlp(
             vision_config.hidden_size,
             text_config.hidden_size,
             vision_config.anyres_pooling_size,
@@ -953,7 +953,7 @@ class HunyuanVit_Video(torch.nn.Module):
         return images_feats
 
 
-class HunYuanRMSNorm(nn.Module):
+class ARCHunyuanVideoRMSNorm(nn.Module):
     def __init__(self, hidden_size, eps=1e-6):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
@@ -967,7 +967,7 @@ class HunYuanRMSNorm(nn.Module):
         return self.weight * hidden_states.to(input_dtype)
 
 
-class HunYuanRotaryEmbedding(nn.Module):
+class ARCHunyuanVideoRotaryEmbedding(nn.Module):
     def __init__(self, dim, max_position_embeddings=2048, base=10000, device=None):
         super().__init__()
 
@@ -997,7 +997,7 @@ class HunYuanRotaryEmbedding(nn.Module):
         )
 
 
-class HunYuanLinearScalingRotaryEmbedding(HunYuanRotaryEmbedding):
+class ARCHunyuanVideoLinearScalingRotaryEmbedding(ARCHunyuanVideoRotaryEmbedding):
     def __init__(self, dim, max_position_embeddings=2048, base=10000, device=None, scaling_factor=1.0):
         self.scaling_factor = scaling_factor
         super().__init__(dim, max_position_embeddings, base, device)
@@ -1012,7 +1012,7 @@ class HunYuanLinearScalingRotaryEmbedding(HunYuanRotaryEmbedding):
         self.register_buffer("sin_cached", emb.sin().to(dtype), persistent=False)
 
 
-class HunYuanDynamicNTKScalingRotaryEmbedding(HunYuanRotaryEmbedding):
+class ARCHunyuanVideoDynamicNTKScalingRotaryEmbedding(ARCHunyuanVideoRotaryEmbedding):
     def __init__(self, dim, max_position_embeddings=2048, base=10000, device=None, scaling_factor=1.0):
         self.scaling_factor = scaling_factor
         super().__init__(dim, max_position_embeddings, base, device)
@@ -1032,7 +1032,7 @@ class HunYuanDynamicNTKScalingRotaryEmbedding(HunYuanRotaryEmbedding):
         self.register_buffer("sin_cached", emb.sin().to(dtype), persistent=False)
 
 
-class HunYuanDynamicNTKAlphaRotaryEmbedding(HunYuanRotaryEmbedding):
+class ARCHunyuanVideoDynamicNTKAlphaRotaryEmbedding(ARCHunyuanVideoRotaryEmbedding):
     """
     HunYuanRotaryEmbedding extended with Dynamic NTK scaling.
     Credits to the Reddit users /u/bloc97 and /u/emozilla
@@ -1094,7 +1094,7 @@ def apply_rotary_pos_emb_xdrope(q, k, cos, sin, position_ids, xdrope_section, ou
         return (q * cos) + (rotate_half(q) * sin).to(q.dtype), (k * cos) + (rotate_half(k) * sin).to(k.dtype)
 
 
-class HunYuanMLP(nn.Module):
+class ARCHunyuanVideoMLP(nn.Module):
     def __init__(self, config, layer_idx=None):
         super().__init__()
         self.config = config
@@ -1136,7 +1136,7 @@ def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
     return hidden_states.reshape(batch, num_key_value_heads * n_rep, slen, head_dim)
 
 
-class HunYuanAttention(nn.Module):
+class ARCHunyuanVideoAttention(nn.Module):
     def __init__(self, config, layer_idx: Optional[int] = None):
         super().__init__()
         self.config = config
@@ -1162,8 +1162,8 @@ class HunYuanAttention(nn.Module):
 
         self.o_proj = nn.Linear(self.hidden_size_q, self.hidden_size, bias=config.attention_bias)
         if self.use_qk_norm:
-            self.query_layernorm = HunYuanRMSNorm(self.head_dim, eps=config.rms_norm_eps)
-            self.key_layernorm = HunYuanRMSNorm(self.head_dim, eps=config.rms_norm_eps)
+            self.query_layernorm = ARCHunyuanVideoRMSNorm(self.head_dim, eps=config.rms_norm_eps)
+            self.key_layernorm = ARCHunyuanVideoRMSNorm(self.head_dim, eps=config.rms_norm_eps)
         if self.use_rotary_pos_emb:
             self._init_rope()
             self.position_embedding_xdrope = config.position_embedding_xdrope
@@ -1171,7 +1171,7 @@ class HunYuanAttention(nn.Module):
 
     def _init_rope(self):
         if self.config.rope_scaling is None:
-            self.rotary_emb = HunYuanRotaryEmbedding(
+            self.rotary_emb = ARCHunyuanVideoRotaryEmbedding(
                 self.head_dim,
                 max_position_embeddings=self.max_position_embeddings,
                 base=self.rope_theta,
@@ -1181,7 +1181,7 @@ class HunYuanAttention(nn.Module):
             scaling_factor = self.config.rope_scaling["factor"]
             scaling_alpha = self.config.rope_scaling["alpha"]
             if scaling_type == "linear":
-                self.rotary_emb = HunYuanLinearScalingRotaryEmbedding(
+                self.rotary_emb = ARCHunyuanVideoLinearScalingRotaryEmbedding(
                     self.head_dim,
                     max_position_embeddings=self.max_position_embeddings,
                     scaling_factor=scaling_factor,
@@ -1189,14 +1189,14 @@ class HunYuanAttention(nn.Module):
                 )
             elif scaling_type == "dynamic":
                 if scaling_alpha:
-                    self.rotary_emb = HunYuanDynamicNTKAlphaRotaryEmbedding(
+                    self.rotary_emb = ARCHunyuanVideoDynamicNTKAlphaRotaryEmbedding(
                         self.head_dim,
                         max_position_embeddings=self.max_position_embeddings,
                         scaling_alpha=scaling_alpha,
                         base=self.rope_theta,
                     )
                 else:
-                    self.rotary_emb = HunYuanDynamicNTKScalingRotaryEmbedding(
+                    self.rotary_emb = ARCHunyuanVideoDynamicNTKScalingRotaryEmbedding(
                         self.head_dim,
                         max_position_embeddings=self.max_position_embeddings,
                         scaling_factor=scaling_factor,
@@ -1288,7 +1288,7 @@ class HunYuanAttention(nn.Module):
         return attn_output, attn_weights, past_key_value, (orig_key_states, orig_value_states)
 
 
-class HunYuanFlashAttention2(HunYuanAttention):
+class ARCHunyuanVideoFlashAttention2(ARCHunyuanVideoAttention):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._flash_attn_uses_top_left_mask = not is_flash_attn_greater_or_equal_2_10()
@@ -1440,7 +1440,7 @@ class HunYuanFlashAttention2(HunYuanAttention):
         )
 
 
-class HunYuanSdpaAttention(HunYuanAttention):
+class ARCHunyuanVideoSdpaAttention(ARCHunyuanVideoAttention):
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -1533,25 +1533,25 @@ class HunYuanSdpaAttention(HunYuanAttention):
         return attn_output, None, past_key_value, (orig_key_states, orig_value_states)
 
 
-HUNYUAN_ATTENTION_CLASSES = {
-    "eager": HunYuanAttention,
-    "flash_attention_2": HunYuanFlashAttention2,
-    "sdpa": HunYuanSdpaAttention,
+ARCHUNYUANVIDEO_ATTENTION_CLASSES = {
+    "eager": ARCHunyuanVideoAttention,
+    "flash_attention_2": ARCHunyuanVideoFlashAttention2,
+    "sdpa": ARCHunyuanVideoSdpaAttention,
 }
 
 
-class HunYuanDecoderLayer(nn.Module):
+class ARCHunyuanVideoDecoderLayer(nn.Module):
     def __init__(self, config, layer_idx: int):
         super().__init__()
         self.hidden_size = config.hidden_size
         self.layer_idx = layer_idx
 
-        self.self_attn = HUNYUAN_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
-        self.mlp = HunYuanMLP(config, layer_idx=layer_idx)
+        self.self_attn = ARCHUNYUANVIDEO_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
+        self.mlp = ARCHunyuanVideoMLP(config, layer_idx=layer_idx)
 
         if config.norm_type == "hf_rms" or config.norm_type == "rms":
-            self.input_layernorm = HunYuanRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-            self.post_attention_layernorm = HunYuanRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+            self.input_layernorm = ARCHunyuanVideoRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+            self.post_attention_layernorm = ARCHunyuanVideoRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         elif config.norm_type == "fused" or config.norm_type == "torch_nn":
             self.input_layernorm = nn.LayerNorm(config.hidden_size, eps=config.rms_norm_eps)
             self.post_attention_layernorm = nn.LayerNorm(config.hidden_size, eps=config.rms_norm_eps)
@@ -1613,11 +1613,11 @@ class ARCHunyuanVideoTextModel(ARCHunyuanVideoPreTrainedModel):
 
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
         self.layers = nn.ModuleList(
-            [HunYuanDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
+            [ARCHunyuanVideoDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self._use_sdpa = config._attn_implementation == "sdpa"
         self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
-        self.norm = HunYuanRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.norm = ARCHunyuanVideoRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
         self.gradient_checkpointing = False
         self.post_init()
@@ -1897,7 +1897,7 @@ class ARCHunyuanVideoModel(ARCHunyuanVideoPreTrainedModel):
     def __init__(self, config: ARCHunyuanVideoConfig):
         super().__init__(config)
         self.language_model = ARCHunyuanVideoTextModelForCausalLM(config.text_config)
-        self.vision_model = HunyuanVit_Video(config.vision_config, config.text_config)
+        self.vision_model = ARCHunyuanVideoVisionModel(config.vision_config, config.text_config)
         self.speech_encoder = ARCHunyuanVideoAudioEncoder(config.audio_config)
 
         # Additional configs from old version
@@ -2239,7 +2239,9 @@ class ARCHunyuanVideoForConditionalGeneration(ARCHunyuanVideoModel, GenerationMi
 __all__ = [
     "ARCHunyuanVideoForConditionalGeneration",
     "ARCHunyuanVideoConfig",
+    "ARCHunyuanVideoVisionModel",
     "ARCHunyuanVideoVisionConfig",
+    "ARCHunyuanVideoAudioEncoder",
     "ARCHunyuanVideoAudioConfig",
     "ARCHunyuanVideoTextConfig",
 ]
