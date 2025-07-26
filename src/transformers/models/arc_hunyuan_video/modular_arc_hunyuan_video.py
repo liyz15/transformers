@@ -300,7 +300,7 @@ class ARCHunyuanVideoPreTrainedModel(PreTrainedModel):
     config_class = ARCHunyuanVideoConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
-    _no_split_modules = ["HunYuanDecoderLayer"]
+    _no_split_modules = ["ARCHunyuanVideoDecoderLayer"]
     _skip_keys_device_placement = "past_key_values"
     _supports_flash_attn_2 = True
     _supports_sdpa = True
